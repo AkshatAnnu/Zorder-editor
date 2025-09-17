@@ -1,0 +1,129 @@
+name: Build Windows Executables
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install system dependencies
+      run: |
+        # Install FFmpeg
+        choco install ffmpeg -y
+        
+        # Verify FFmpeg installation
+        ffmpeg -version
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+        
+        # Install agent dependencies
+        pip install -r agent/requirements.txt
+        
+        # Install console dependencies  
+        pip install -r console/requirements.txt
+    
+    - name: Build Agent Executable
+      run: |
+        cd agent
+        pyinstaller --onefile --noconsole --name agent --distpath ../dist agent.py
+        
+        # Also build secret_store as standalone tool
+        pyinstaller --onefile --console --name secret_store --distpath ../dist secret_store.py
+    
+    - name: Build Console Executable
+      run: |
+        cd console
+        pyinstaller --onefile --windowed --name console --distpath ../dist console.py
+    
+    - name: Test Executables
+      run: |
+        # Test that executables were created and can run
+        if (Test-Path "dist/agent.exe") {
+          Write-Host "✅ agent.exe created successfully"
+          # Test basic execution (should exit quickly without config)
+          Start-Process -FilePath "dist/agent.exe" -ArgumentList "--help" -Wait -WindowStyle Hidden -ErrorAction SilentlyContinue
+        } else {
+          Write-Error "❌ agent.exe not found"
+        }
+        
+        if (Test-Path "dist/console.exe") {
+          Write-Host "✅ console.exe created successfully"
+        } else {
+          Write-Error "❌ console.exe not found"
+        }
+        
+        if (Test-Path "dist/secret_store.exe") {
+          Write-Host "✅ secret_store.exe created successfully"
+        } else {
+          Write-Error "❌ secret_store.exe not found"
+        }
+    
+    - name: Prepare Installer Files
+      run: |
+        # Copy necessary files to dist directory
+        Copy-Item "agent/.env.example" "dist/agent.env.example"
+        Copy-Item "console/.env.example" "dist/console.env.example"
+        Copy-Item "README.md" "dist/"
+        Copy-Item "installer/install_task.ps1" "dist/"
+        
+        # List all files in dist
+        Write-Host "Files in dist directory:"
+        Get-ChildItem dist/ | Format-Table Name, Length, LastWriteTime
+    
+    - name: Build Inno Setup Installer (Optional)
+      if: false  # Disabled by default - enable if Inno Setup is available
+      run: |
+        # This would require Inno Setup to be installed in the runner
+        # choco install innosetup -y
+        # iscc installer/zorder.iss
+    
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: zorder-windows-executables
+        path: |
+          dist/agent.exe
+          dist/console.exe
+          dist/secret_store.exe
+          dist/agent.env.example
+          dist/console.env.example
+          dist/README.md
+          dist/install_task.ps1
+        retention-days: 30
+    
+    - name: Upload Installer Artifacts (if built)
+      if: false  # Enable when Inno Setup installer is built
+      uses: actions/upload-artifact@v3
+      with:
+        name: zorder-installer
+        path: installer/Output/ZorderInstaller.exe
+        retention-days: 30
+    
+    - name: Create Release (on tags)
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          dist/agent.exe
+          dist/console.exe
+          dist/secret_store.exe
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
