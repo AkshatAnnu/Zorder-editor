@@ -95,7 +95,7 @@ jobs:
         # iscc installer/zorder.iss
     
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: zorder-windows-executables
         path: |
@@ -110,7 +110,7 @@ jobs:
     
     - name: Upload Installer Artifacts (if built)
       if: false  # Enable when Inno Setup installer is built
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: zorder-installer
         path: installer/Output/ZorderInstaller.exe
