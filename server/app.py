@@ -4,8 +4,17 @@ import sqlite3
 import datetime
 import mimetypes
 import json
+import logging
 from flask import Flask, request, jsonify
 import requests
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # -----------------------------
 # Config & App
@@ -141,7 +150,7 @@ def wa_send_media(media_id: str, caption: str, to: str = None):
 # -----------------------------
 @app.get("/")
 def root():
-    return {"ok": True, "service": "zorder-backend"}
+    return {"ok": True, "service": "zorder-backend", "version": "1.1.0"}
 
 
 @app.get("/healthz")
@@ -158,7 +167,9 @@ def bill_edited():
 
     admin_url = data.get("admin_url", "")
     action_id = str(uuid.uuid4())
-    now = datetime.datetime.utcnow().isoformat() + "Z"
+    now = datetime.datetime.now(datetime.UTC).isoformat() + "Z"
+
+    logger.info(f"Processing bill edit request: invoice={data['invoice_id']}, biller={data['biller_id']}, machine={data['machine_id']}")
 
     con = sqlite3.connect(DB)
     cur = con.cursor()
@@ -307,7 +318,7 @@ def agent_arm_status(machine_id):
         cursor.execute("""
             SELECT id, status, created_at, consumed
             FROM approvals 
-            WHERE machine_id = ? AND status = 'approved' AND consumed = 0
+            WHERE machine_id = ? AND status = 'allowed' AND consumed = 0
             ORDER BY created_at DESC 
             LIMIT 1
         """, (machine_id,))
@@ -332,9 +343,26 @@ def agent_arm_status(machine_id):
         return {"error": "arm_status_failed", "details": str(e)}, 500
 
 
+# Error handlers
+@app.errorhandler(404)
+def not_found(error):
+    return {"error": "endpoint not found"}, 404
+
+
+@app.errorhandler(500)
+def internal_error(error):
+    logger.error(f"Internal server error: {error}")
+    return {"error": "internal server error"}, 500
+
+
 # -----------------------------
 # Main
 # -----------------------------
 if __name__ == "__main__":
+    logger.info("Starting Zorder Backend Server v1.1.0")
+    logger.info(f"Database: {DB}")
+    logger.info(f"Upload directory: {UPLOAD_DIR}")
+    logger.info(f"WhatsApp configured: {bool(WHATSAPP_TOKEN and WHATSAPP_PHONE_ID)}")
+    
     # In dev, enable debug; in prod, run behind a real WSGI server (gunicorn/uwsgi) + HTTPS reverse proxy
     app.run(host="0.0.0.0", port=8000, debug=True)
