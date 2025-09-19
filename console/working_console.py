@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Zorder Console - Owner GUI for sending WhatsApp approval requests
+Working Zorder Console - Fixed version
 """
 import os
 import tkinter as tk
@@ -12,115 +12,113 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-class ZorderConsole:
+class WorkingConsole:
     def __init__(self, root):
         self.root = root
         self.root.title("Zorder Bill Editor Console")
         self.root.geometry("500x400")
-        self.root.resizable(True, True)
         
         # Configuration
         self.server_url = os.getenv("SERVER_URL", "http://127.0.0.1:8000")
         
-        self.setup_ui()
+        self.create_ui()
     
-    def setup_ui(self):
-        """Setup the main user interface."""
-        # Main frame
-        main_frame = ttk.Frame(self.root, padding="20")
-        main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
-        
-        # Configure grid weights
-        self.root.columnconfigure(0, weight=1)
-        self.root.rowconfigure(0, weight=1)
-        main_frame.columnconfigure(1, weight=1)
+    def create_ui(self):
+        # Main container
+        main_frame = tk.Frame(self.root, bg="white")
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
         
         # Title
-        title_label = ttk.Label(main_frame, text="Zorder Bill Editor Console", 
-                               font=("Arial", 16, "bold"))
-        title_label.grid(row=0, column=0, columnspan=2, pady=(0, 20))
+        title_label = tk.Label(main_frame, text="Zorder Bill Editor Console", 
+                              font=("Arial", 16, "bold"), bg="white")
+        title_label.pack(pady=(0, 20))
         
-        # Server URL display
-        server_frame = ttk.LabelFrame(main_frame, text="Server Configuration", padding="10")
-        server_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 20))
-        server_frame.columnconfigure(1, weight=1)
+        # Server Configuration Frame
+        server_frame = tk.LabelFrame(main_frame, text="Server Configuration", 
+                                   font=("Arial", 12, "bold"), bg="white")
+        server_frame.pack(fill=tk.X, pady=(0, 20))
         
-        ttk.Label(server_frame, text="Server URL:").grid(row=0, column=0, sticky=tk.W, padx=(0, 10))
+        server_inner = tk.Frame(server_frame, bg="white")
+        server_inner.pack(fill=tk.X, padx=10, pady=10)
+        
+        tk.Label(server_inner, text="Server URL:", bg="white").pack(anchor=tk.W)
         self.server_var = tk.StringVar(value=self.server_url)
-        server_entry = ttk.Entry(server_frame, textvariable=self.server_var, width=50)
-        server_entry.grid(row=0, column=1, sticky=(tk.W, tk.E))
+        server_entry = tk.Entry(server_inner, textvariable=self.server_var, width=50)
+        server_entry.pack(fill=tk.X, pady=(5, 10))
         
-        # Test connection button
-        test_btn = ttk.Button(server_frame, text="Test Connection", command=self.test_connection)
-        test_btn.grid(row=0, column=2, padx=(10, 0))
+        test_btn = tk.Button(server_inner, text="Test Connection", 
+                           command=self.test_connection, bg="blue", fg="white")
+        test_btn.pack(anchor=tk.W)
         
-        # Input form
-        form_frame = ttk.LabelFrame(main_frame, text="Bill Edit Request", padding="10")
-        form_frame.grid(row=2, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 20))
-        form_frame.columnconfigure(1, weight=1)
+        # Form Frame
+        form_frame = tk.LabelFrame(main_frame, text="Bill Edit Request", 
+                                 font=("Arial", 12, "bold"), bg="white")
+        form_frame.pack(fill=tk.X, pady=(0, 20))
+        
+        form_inner = tk.Frame(form_frame, bg="white")
+        form_inner.pack(fill=tk.X, padx=10, pady=10)
         
         # Invoice ID
-        ttk.Label(form_frame, text="Invoice ID:").grid(row=0, column=0, sticky=tk.W, pady=5)
+        tk.Label(form_inner, text="Invoice ID:", bg="white").pack(anchor=tk.W)
         self.invoice_id_var = tk.StringVar()
-        invoice_entry = ttk.Entry(form_frame, textvariable=self.invoice_id_var)
-        invoice_entry.grid(row=0, column=1, sticky=(tk.W, tk.E), pady=5, padx=(10, 0))
+        invoice_entry = tk.Entry(form_inner, textvariable=self.invoice_id_var, width=40)
+        invoice_entry.pack(fill=tk.X, pady=(5, 10))
         
         # Biller ID
-        ttk.Label(form_frame, text="Biller ID:").grid(row=1, column=0, sticky=tk.W, pady=5)
+        tk.Label(form_inner, text="Biller ID:", bg="white").pack(anchor=tk.W)
         self.biller_id_var = tk.StringVar()
-        biller_entry = ttk.Entry(form_frame, textvariable=self.biller_id_var)
-        biller_entry.grid(row=1, column=1, sticky=(tk.W, tk.E), pady=5, padx=(10, 0))
+        biller_entry = tk.Entry(form_inner, textvariable=self.biller_id_var, width=40)
+        biller_entry.pack(fill=tk.X, pady=(5, 10))
         
         # Machine ID
-        ttk.Label(form_frame, text="Machine ID:").grid(row=2, column=0, sticky=tk.W, pady=5)
+        tk.Label(form_inner, text="Machine ID:", bg="white").pack(anchor=tk.W)
         self.machine_id_var = tk.StringVar()
-        machine_entry = ttk.Entry(form_frame, textvariable=self.machine_id_var)
-        machine_entry.grid(row=2, column=1, sticky=(tk.W, tk.E), pady=5, padx=(10, 0))
+        machine_entry = tk.Entry(form_inner, textvariable=self.machine_id_var, width=40)
+        machine_entry.pack(fill=tk.X, pady=(5, 10))
         
-        # Admin URL (optional)
-        ttk.Label(form_frame, text="Admin URL (optional):").grid(row=3, column=0, sticky=tk.W, pady=5)
+        # Admin URL
+        tk.Label(form_inner, text="Admin URL (optional):", bg="white").pack(anchor=tk.W)
         self.admin_url_var = tk.StringVar()
-        admin_entry = ttk.Entry(form_frame, textvariable=self.admin_url_var)
-        admin_entry.grid(row=3, column=1, sticky=(tk.W, tk.E), pady=5, padx=(10, 0))
+        admin_entry = tk.Entry(form_inner, textvariable=self.admin_url_var, width=40)
+        admin_entry.pack(fill=tk.X, pady=(5, 10))
         
-        # Buttons frame
-        btn_frame = ttk.Frame(main_frame)
-        btn_frame.grid(row=3, column=0, columnspan=2, pady=20)
+        # Buttons
+        btn_frame = tk.Frame(main_frame, bg="white")
+        btn_frame.pack(fill=tk.X, pady=20)
         
-        # Send button
-        send_btn = ttk.Button(btn_frame, text="Send WhatsApp YES/NO", 
-                             command=self.send_approval_request)
+        send_btn = tk.Button(btn_frame, text="Send WhatsApp YES/NO", 
+                           command=self.send_approval_request, bg="green", fg="white",
+                           font=("Arial", 12, "bold"))
         send_btn.pack(side=tk.LEFT, padx=(0, 10))
         
-        # Clear button
-        clear_btn = ttk.Button(btn_frame, text="Clear", command=self.clear_form)
+        clear_btn = tk.Button(btn_frame, text="Clear", command=self.clear_form)
         clear_btn.pack(side=tk.LEFT)
         
-        # Status frame
-        status_frame = ttk.LabelFrame(main_frame, text="Status", padding="10")
-        status_frame.grid(row=4, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 10))
-        status_frame.columnconfigure(0, weight=1)
+        # Status Frame
+        status_frame = tk.LabelFrame(main_frame, text="Status", 
+                                   font=("Arial", 12, "bold"), bg="white")
+        status_frame.pack(fill=tk.BOTH, expand=True)
+        
+        status_inner = tk.Frame(status_frame, bg="white")
+        status_inner.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
         # Status text
-        self.status_text = tk.Text(status_frame, height=8, wrap=tk.WORD, state=tk.DISABLED)
-        self.status_text.grid(row=0, column=0, sticky=(tk.W, tk.E))
+        self.status_text = tk.Text(status_inner, height=6, wrap=tk.WORD, 
+                                  font=("Courier", 10))
+        self.status_text.pack(fill=tk.BOTH, expand=True)
         
-        # Scrollbar for status text
-        scrollbar = ttk.Scrollbar(status_frame, orient=tk.VERTICAL, command=self.status_text.yview)
-        scrollbar.grid(row=0, column=1, sticky=(tk.N, tk.S))
+        # Scrollbar
+        scrollbar = tk.Scrollbar(status_inner, orient=tk.VERTICAL, 
+                               command=self.status_text.yview)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.status_text.configure(yscrollcommand=scrollbar.set)
         
-        # Set focus to first input
-        invoice_entry.focus()
-        
-        # Initial status message
+        # Initial status
         self.add_status_message("Ready to send approval requests...")
     
     def add_status_message(self, message):
         """Add a message to the status text area."""
-        self.status_text.configure(state=tk.NORMAL)
         self.status_text.insert(tk.END, f"{message}\n")
-        self.status_text.configure(state=tk.DISABLED)
         self.status_text.see(tk.END)
     
     def test_connection(self):
@@ -244,11 +242,7 @@ class ZorderConsole:
 def main():
     """Main function to run the console application."""
     root = tk.Tk()
-    app = ZorderConsole(root)
-    
-    # Simple window positioning - fixed size and position
-    root.geometry("500x400+100+100")
-    
+    app = WorkingConsole(root)
     root.mainloop()
 
 if __name__ == "__main__":
